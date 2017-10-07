@@ -15,38 +15,26 @@ class NERModel(object):
         self.ntags = ntags
         self.logger = config.logger
 
-        """
-        Adding all the placeholders
-        """
-        # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None],
                                        name="word_ids")
 
-        # shape = (batch size)
         self.sequence_lengths = tf.placeholder(tf.int32, shape=[None],
                                                name="sequence_lengths")
 
-        # shape = (batch size, max length of sentence, max length of word)
         self.char_ids = tf.placeholder(tf.int32, shape=[None, None, None],
                                        name="char_ids")
 
-        # shape = (batch_size, max_length of sentence)
         self.word_lengths = tf.placeholder(tf.int32, shape=[None, None],
                                            name="word_lengths")
 
-        # shape = (batch size, max length of sentence in batch)
         self.labels = tf.placeholder(tf.int32, shape=[None, None],
                                      name="labels")
 
-        # hyper parameters
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[],
                                       name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[],
                                  name="lr")
 
-        """
-        Adding word embeddings
-        """
         with tf.variable_scope("words"):
             _word_embeddings = tf.Variable(self.embeddings, name="_word_embeddings", dtype=tf.float32,
                                            trainable=self.config.train_embeddings)
@@ -55,16 +43,12 @@ class NERModel(object):
             print(word_embeddings)
 
         with tf.variable_scope("chars"):
-            # get embeddings matrix
             _char_embeddings = tf.get_variable(name="_char_embeddings", dtype=tf.float32,
                                                shape=[self.nchars, self.config.dim_char])
             char_embeddings = tf.nn.embedding_lookup(_char_embeddings, self.char_ids,
                                                      name="char_embeddings")
-            # print(char_embeddings)
-            # put the time dimension on axis=1
             shape = tf.shape(char_embeddings)
             char_embeddings = tf.reshape(char_embeddings, shape=[-1, shape[-2], self.config.dim_char])
-            # print(char_embeddings)
             word_lengths = tf.reshape(self.word_lengths, shape=[-1])
             cell_fw = tf.contrib.rnn.LSTMCell(self.config.char_hidden_size,
                                               state_is_tuple=True)
@@ -78,16 +62,12 @@ class NERModel(object):
                                                                                   dtype=tf.float32)
 
             output = tf.concat([output_fw, output_bw], axis=-1)
-            # shape = (batch size, max sentence length, char hidden size)
             output = tf.reshape(output, shape=[-1, shape[1], 2 * self.config.char_hidden_size])
 
             # word_embeddings = tf.concat([word_embeddings, output], axis=-1)
 
         self.word_embeddings = tf.nn.dropout(output, self.dropout)
 
-        """
-        Adding logits
-        """
         with tf.variable_scope("bi-lstm"):
             cell_fw = tf.contrib.rnn.LSTMCell(self.config.hidden_size)
             cell_bw = tf.contrib.rnn.LSTMCell(self.config.hidden_size)
@@ -115,25 +95,16 @@ class NERModel(object):
             pred = tf.matmul(output, W) + b
             self.logits = tf.reshape(pred, [-1, ntime_steps, self.ntags])
 
-        """
-        Adding Loss
-        """
         log_likelihood, self.transition_params = crf_log_likelihood(
             self.logits, self.labels, self.sequence_lengths)
         self.loss = tf.reduce_mean(-log_likelihood)
 
         tf.summary.scalar("loss", self.loss)
 
-        """
-        Adding Train
-        """
         with tf.variable_scope("train_step"):
             optimizer = tf.train.AdamOptimizer(self.lr)
             self.train_op = optimizer.minimize(self.loss)
 
-        """
-        Adding Init
-        """
         self.init = tf.global_variables_initializer()
 
     def get_feed_dict(self, words, labels=None, lr=None, dropout=None):
@@ -141,7 +112,6 @@ class NERModel(object):
         word_ids, sequence_lengths = pad_sequences(word_ids, 0)
         char_ids, word_lengths = pad_sequences(char_ids, pad_tok=0, nlevels=2)
 
-        # build feed dictionary
         feed = {self.word_ids: word_ids, self.sequence_lengths: sequence_lengths, self.char_ids: char_ids,
                 self.word_lengths: word_lengths}
 
@@ -250,10 +220,6 @@ class NERModel(object):
                         break
 
     def test(self, test, target_output):
-        """
-        :param test: test dataset object
-        :param target_output: target outputs
-        """
         saver = tf.train.Saver()
         with tf.Session() as sess:
             self.logger.info("Testing model over the test set")

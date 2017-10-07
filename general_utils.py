@@ -3,11 +3,8 @@ import sys
 import logging
 import numpy as np
 
-
+# Taken from CS224N
 def print_sentence(logger, data):
-    """
-    Taken from CS224N
-    """
     spacings = [max([len(seq[i]) for seq in data.values()]) for i in range(len(data[list(data.keys())[0]]))]
     for key, seq in data.items():
         to_print = ""
@@ -26,17 +23,8 @@ def get_logger(filename):
     logging.getLogger().addHandler(handler)
     return logger
 
-
+# Progbar class taken from keras (github.com/fchollet/keras/)
 class Progbar(object):
-    """Progbar class copied from keras (https://github.com/fchollet/keras/)
-    
-    Displays a progress bar.
-    Small edit : added strict arg to update
-    # Arguments
-        target: Total number of steps expected.
-        interval: Minimum visual progress update interval (in seconds).
-    """
-
     def __init__(self, target, width=30, verbose=1):
         self.width = width
         self.target = target

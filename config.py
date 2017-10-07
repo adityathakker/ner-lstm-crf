@@ -4,36 +4,29 @@ from general_utils import get_logger
 
 class Config(object):
     def __init__(self):
-        # directory for training outputs
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
 
-        # create instance of logger
         self.logger = get_logger(self.log_path)
 
-    # general config
     output_path = "results/crf/"
     model_output = output_path + "model.weights/"
     log_path = output_path + "log.txt"
 
-    # embeddings
     dim = 500
     dim_char = 100
     glove_filename = "data/glove.txt"
     trimmed_filename = "data/glove.trimmed.npz"
 
-    # dataset
     dev_filename = "data/hindi.dev.conll_format"
     test_filename = "data/hindi.test.conll_format"
     train_filename = "data/hindi.train.conll_format"
     max_iter = None  # if not None, max number of examples
 
-    # vocab (created from dataset with build_data.py)
     words_filename = "data/words.txt"
     tags_filename = "data/tags.txt"
     chars_filename = "data/chars.txt"
 
-    # training
     train_embeddings = True
     nepochs = 100
     dropout = 0.5
@@ -42,6 +35,5 @@ class Config(object):
     lr_decay = 0.99
     nepoch_no_imprv = 10
 
-    # model hyperparameters
     hidden_size = 700
     char_hidden_size = 200
